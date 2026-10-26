@@ -1,0 +1,196 @@
+--Challenge C-07: Daily & Seasonal Patterns
+--1: Day-wise Sales Pattern
+
+SELECT 
+    TO_CHAR(invoice_date, 'Day') AS day_name,
+    
+    COUNT(DISTINCT invoice_id) AS transactions,
+    ROUND(CAST(SUM(total_amount)AS NUMERIC),2) AS revenue
+
+FROM vw_sales_clean
+WHERE is_return = false
+GROUP BY day_name
+ORDER BY revenue DESC;
+/*
+"day_name"	"transactions"	"revenue"
+"Friday   "	15136	71852195.56
+"Saturday "	9071	52568658.83
+"Thursday "	8528	50825103.32
+"Monday   "	7089	44420295.10
+"Wednesday"	7163	43566593.24
+"Tuesday  "	7213	43407616.44
+"Sunday   "	7161	41609623.24
+*/
+
+--2: Monthly Trend
+SELECT 
+    DATE_TRUNC('month', invoice_date) AS month,
+    
+    COUNT(DISTINCT invoice_id) AS transactions,
+    ROUND(CAST(SUM(total_amount)AS NUMERIC),2) AS revenue
+
+FROM vw_sales_clean
+WHERE is_return = false
+GROUP BY month
+ORDER BY revenue desc;
+/*
+"month"	"transactions"	"revenue"
+"2026-01-01 00:00:00+04"	5414	45277014.72
+"2025-10-01 00:00:00+04"	5607	35250556.64
+"2025-05-01 00:00:00+04"	5690	31692832.70
+"2025-04-01 00:00:00+04"	4778	28820159.58
+"2025-03-01 00:00:00+04"	5712	27832481.46
+"2025-02-01 00:00:00+04"	5097	24803387.40
+"2025-09-01 00:00:00+04"	4340	24114786.67
+"2025-12-01 00:00:00+04"	4402	24079015.79
+"2025-06-01 00:00:00+04"	3938	20486952.72
+"2025-11-01 00:00:00+04"	3957	19946033.26
+"2025-08-01 00:00:00+04"	3828	19142193.60
+"2025-07-01 00:00:00+04"	3565	17998406.81
+"2025-01-01 00:00:00+04"	3303	14810420.17
+"2026-02-01 00:00:00+04"	1730	13995844.21
+*/
+
+--3: Transaction vs Value Behavior
+SELECT 
+    DATE(invoice_date) AS day,
+    
+    COUNT(DISTINCT invoice_id) AS txn_count,
+    ROUND(CAST(SUM(total_amount)AS NUMERIC),2) AS revenue
+
+FROM vw_sales_clean
+WHERE is_return = false
+GROUP BY day
+ORDER BY revenue limit 10
+
+/* ORDER BY revenue desc limit 10
+"day"	"txn_count"	"revenue"
+"2026-01-29"	259	3774896.30
+"2026-02-02"	175	2657901.55
+"2026-01-31"	289	2465245.78
+"2026-01-25"	186	2423672.76
+"2026-01-01"	199	2355129.30
+"2026-01-30"	324	2275510.00
+"2025-10-10"	419	2209424.50
+"2025-10-22"	122	2055979.89
+"2026-01-11"	152	1991846.50
+"2026-02-08"	140	1975010.73
+--asc
+"day"	"txn_count"	"revenue"
+"2025-07-20"	59	211770.00
+"2025-07-23"	68	297564.00
+"2025-12-18"	75	298137.00
+"2025-06-14"	85	322749.33
+"2025-11-25"	77	332105.00
+"2025-07-22"	70	332482.84
+"2025-07-05"	58	341269.70
+"2025-06-17"	72	356545.33
+"2025-06-24"	82	361883.00
+"2025-08-24"	76	375208.00
+
+*/
+--4: Gold Rate Effect
+SELECT 
+    invoice_date,
+    AVG(gold_rate) AS avg_gold_rate,
+    SUM(total_amount) AS revenue
+
+FROM vw_sales_clean
+GROUP BY invoice_date
+ORDER BY avg_gold_rate asc  limit 10;
+/*ORDER BY revenue desc limit 10;
+"2026-01-29"	506.2304432132963989	3826176.3
+"2026-02-02"	428.0353207547169811	2662571.78
+"2026-01-31"	457.1826046511627907	2481545.7800000003
+"2026-01-25"	336.7796551724137931	2423672.76
+"2026-01-01"	403.4232014388489209	2357229.3
+"2026-01-21"	253.1214184397163121	2349543
+"2026-01-30"	481.9308478260869565	2286580
+"2025-10-10"	401.5289340101522843	2223264.5
+"2025-10-22"	419.0899431818181818	2059854.8900000001
+"2025-10-17"	406.3400573613766730	2010745
+
+--------------------ORDER BY revenue asc limit 10;-----------------
+"2025-07-20"	326.9798648648648649	214470
+"2025-07-23"	349.5478000000000000	299914
+"2025-12-18"	436.6872727272727273	320497
+"2025-06-14"	317.2746788990825688	322749.32999999996
+"2025-07-22"	339.2759803921568627	333782.83999999997
+"2025-11-25"	425.6645370370370370	335585
+"2025-07-05"	307.1082417582417582	342669.7
+"2025-06-17"	354.4503773584905660	370207.12
+"2025-06-24"	341.8165811965811966	371083
+"2025-08-24"	335.1816393442622951	377127.67
+-----------------------ORDER BY avg_gold_rate desc  limit 10;------------------------------
+
+"2026-02-05"	508.9149557522123894	1172630
+"2026-01-29"	506.2304432132963989	3826176.3
+"2026-02-01"	502.0436986301369863	1092101
+"2026-02-06"	495.8025063938618926	1898784
+"2026-02-11"	488.4189312977099237	602877
+"2026-02-10"	487.3332738095238095	754301
+"2026-02-03"	483.7297551020408163	1430412.8199999998
+"2026-01-30"	481.9308478260869565	2286580
+"2026-02-09"	476.5287704918032787	568879.7
+"2026-02-04"	472.7221681415929204	893983.8700000001
+
+-----------------ORDER BY avg_gold_rate asc  limit 10;-------------------------
+"2025-04-06"	231.0367697594501718	725465.06
+"2026-01-21"	253.1214184397163121	2349543
+"2025-01-12"	256.1654140127388535	499550
+"2025-01-21"	256.5163095238095238	532360
+"2025-01-19"	261.3930392156862745	456820
+"2025-01-17"	261.9271655328798186	1073410
+"2025-01-14"	266.6321505376344086	490494
+"2025-01-24"	268.9254347826086957	1124505
+"2025-02-12"	269.5667843137254902	756825
+"2025-01-18"	273.3436956521739130	721570
+*/
+
+
+--5daily summary tables compare to your calculations from fact_sales?
+WITH sales_calc AS (
+    SELECT 
+        branch_id,
+        DATE(invoice_date) AS summary_date,
+        ROUND(SUM(total_amount)::NUMERIC, 2) AS calculated_total
+    FROM vw_sales_clean
+    WHERE is_return = false
+    GROUP BY branch_id, DATE(invoice_date)
+),
+
+summary_calc AS (
+    SELECT 
+        branch_id,
+        summary_date,
+        ROUND(SUM(total_amount)::NUMERIC, 2) AS stored_total
+    FROM vw_branch_daily_summary
+	WHERE is_return = false
+    GROUP BY branch_id, summary_date
+)
+
+SELECT 
+    COALESCE(s.branch_id, c.branch_id) AS branch_id,
+    COALESCE(s.summary_date, c.summary_date) AS summary_date,
+
+    c.calculated_total,
+    s.stored_total,
+
+    ROUND(
+        (COALESCE(s.stored_total, 0) - COALESCE(c.calculated_total, 0))::NUMERIC, 2
+    ) AS difference,
+
+    CASE 
+        WHEN COALESCE(s.stored_total, 0) = COALESCE(c.calculated_total, 0)
+        THEN 'MATCH'
+        ELSE 'MISMATCH'
+    END AS validation_status
+
+FROM summary_calc s
+FULL OUTER JOIN sales_calc c
+    ON s.branch_id = c.branch_id
+   AND s.summary_date = c.summary_date
+
+ORDER BY validation_status;
+
+/* 4000 recods matching, 960 Records Mis Matchg
